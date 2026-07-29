@@ -1,4 +1,6 @@
 import { execFileSync } from 'node:child_process';
+import { existsSync } from 'node:fs';
+import { createRequire } from 'node:module';
 import { readFileSync, rmSync } from 'node:fs';
 import { dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -15,14 +17,19 @@ import {
 import { envVarNameFromSecretPath } from './paths.js';
 import { parseHandoffPath, parseLoadedVarNames } from './response.js';
 
-function resolveTsxCliPath(): string {
-  return fileURLToPath(
-    new URL('../../../node_modules/tsx/dist/cli.mjs', import.meta.url),
-  );
-}
+function resolveMcpGetChildInvocation(): {
+  command: string;
+  args: string[];
+} {
+  const jsPath = fileURLToPath(new URL('./mcp-get-child.js', import.meta.url));
+  if (existsSync(jsPath)) {
+    return { command: process.execPath, args: [jsPath] };
+  }
 
-function resolveMcpGetChildPath(): string {
-  return fileURLToPath(new URL('./mcp-get-child.ts', import.meta.url));
+  const tsPath = fileURLToPath(new URL('./mcp-get-child.ts', import.meta.url));
+  const require = createRequire(import.meta.url);
+  const tsxCli = require.resolve('tsx/dist/cli.mjs');
+  return { command: process.execPath, args: [tsxCli, tsPath] };
 }
 
 type McpGetChildOutput = {
@@ -35,11 +42,9 @@ function callGetSync(
   options: LoadSecretsOptions = {},
 ): McpGetChildOutput {
   const payload = JSON.stringify({ secret_paths: secretPaths, options });
+  const { command, args } = resolveMcpGetChildInvocation();
   try {
-    const stdout = execFileSync(
-      process.execPath,
-      [resolveTsxCliPath(), resolveMcpGetChildPath()],
-      {
+    const stdout = execFileSync(command, args, {
         input: payload,
         encoding: 'utf8',
         maxBuffer: 16 * 1024 * 1024,
