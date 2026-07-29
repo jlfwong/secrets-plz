@@ -13,7 +13,10 @@
  */
 import * as readline from 'readline/promises';
 import { stdin as input, stdout as output } from 'process';
-import { connectNoxkeyMcp, resolveNoxkeyMcpCommand } from './connect.js';
+import {
+  connectNoxkeyMcp,
+  resolveNoxkeyMcpCommand,
+} from './backends/noxkey/connect.js';
 
 function printHelp(): void {
   console.log(`

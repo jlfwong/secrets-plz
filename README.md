@@ -1,16 +1,15 @@
 # secrets-plz
 
-A synchronous, [dotenv](https://github.com/motdotla/dotenv)-style loader for [NoxKey](https://noxkey.ai/) secrets over MCP.
+A synchronous loader for **dynamic secrets** in local development.
 
-NoxKey exposes secrets to AI agents via the Model Context Protocol (stdio). This library lets **regular scripts and CLIs** fetch those secrets too — without copying API keys into `.env` files.
+Use this when you want to run scripts and dev servers with real credentials, but gate every secret fetch behind biometric approval (Touch ID via [NoxKey](https://noxkey.ai/)) instead of storing API keys in `.env` files. Map env var names to secret paths, fetch values at runtime, and pass them to your process — secrets never sit on disk in plaintext.
+
+**This is for development machines, not production.** Production workloads should use a secrets manager or platform injection (CI env vars, K8s secrets, etc.) that fits unattended deployment. secrets-plz is for the workflow where *you* are at the keyboard and approve each access.
 
 ## Requirements
 
-- macOS with [NoxKey](https://noxkey.ai/) installed and running (menu bar app)
 - Node.js 20+
-- Secrets stored in NoxKey at paths like `org/project/SERVICE_ENVIRONMENT_KEY`
-
-The bundled MCP server lives at `/Applications/NoxKey.app/Contents/MacOS/noxkey-mcp`. Override with `NOXKEY_MCP_PATH` if needed.
+- macOS with a biometric-gated secrets backend (see [Backends](#backends))
 
 ## Install
 
@@ -30,35 +29,39 @@ pnpx secrets-plz GH_TOKEN=personal/general/GITHUB_PRODUCTION_TOKEN -- node serve
 
 ### Programmatic API
 
-Map the env var names your app expects to NoxKey secret paths:
+Map the env var names your app expects to secret paths:
 
 ```typescript
-import { loadNoxkeyEnv } from 'secrets-plz';
+import { loadSecrets } from 'secrets-plz';
 
-loadNoxkeyEnv({
+const secrets = loadSecrets({
   GH_TOKEN: 'personal/general/GITHUB_PRODUCTION_TOKEN',
   DATABASE_URL: 'myorg/myapp/MYAPP_PRODUCTION_DATABASE_URL',
 });
 
-console.log(process.env.GH_TOKEN);
+console.log(secrets.GH_TOKEN);
 ```
 
-All functions are **synchronous** — same ergonomics as `dotenv.config()`.
+With TypeScript, the return type preserves your mapping keys — no `any`, no lost key names:
 
 ```typescript
-import { fetchNoxkeySecrets } from 'secrets-plz';
-
-const secrets = fetchNoxkeySecrets({
+const secrets = loadSecrets({
   GH_TOKEN: 'personal/general/GITHUB_PRODUCTION_TOKEN',
 });
-// => { GH_TOKEN: '...' }  (does not mutate process.env)
+//    ^? { GH_TOKEN: string }
 ```
 
-NoxKey stores keys as `org/project/SERVICE_ENVIRONMENT_KEY`, but tools like GitHub CLI expect names like `GH_TOKEN`. The mapping lets you bridge that gap.
+All functions are **synchronous**. Assign into `process.env` yourself if needed:
+
+```typescript
+Object.assign(process.env, secrets);
+```
+
+Secrets are typically stored as `org/project/SERVICE_ENVIRONMENT_KEY`, but tools like GitHub CLI expect names like `GH_TOKEN`. The mapping lets you bridge that gap.
 
 ### CLI
 
-Run any command with secrets loaded from NoxKey:
+Run any command with secrets loaded dynamically:
 
 ```bash
 # installed globally or as a project dependency
@@ -68,49 +71,63 @@ secrets-plz GH_TOKEN=personal/general/GITHUB_PRODUCTION_TOKEN -- node server.js
 pnpx secrets-plz GH_TOKEN=personal/general/GITHUB_PRODUCTION_TOKEN DATABASE_URL=myorg/myapp/MYAPP_PRODUCTION_DATABASE_URL -- node server.js
 ```
 
-Touch ID may prompt on first access. Multiple mappings use a single MCP `get` call.
+The CLI merges fetched secrets into the child process environment without mutating the parent shell. Multiple mappings use a single fetch call.
 
 ## Env mappings
 
 Each entry is **`ENV_NAME=org/project/KEY`**:
 
-| Mapping | NoxKey path fetched | Env var set |
+| Mapping | Secret path fetched | Env var set |
 |---------|---------------------|-------------|
 | `GH_TOKEN=personal/general/GITHUB_PRODUCTION_TOKEN` | `personal/general/GITHUB_PRODUCTION_TOKEN` | `GH_TOKEN` |
 | `DATABASE_URL=myorg/myapp/MYAPP_PRODUCTION_DATABASE_URL` | `myorg/myapp/MYAPP_PRODUCTION_DATABASE_URL` | `DATABASE_URL` |
 
-Pass a **record** `{ ENV_NAME: secret_path }` in the API, or **`ENV_NAME=secret_path`** tokens on the CLI. The NoxKey key name (last path segment) and the env var name you expose may differ.
+Pass a **record** `{ ENV_NAME: secret_path }` in the API, or **`ENV_NAME=secret_path`** tokens on the CLI. The key name (last path segment) and the env var name you expose may differ.
 
 ## How it works
 
-1. Spawns the NoxKey MCP server over stdio
-2. Calls the `get` tool with your secret paths (NoxKey MCP parameter: `account`)
-3. Parses the returned Bash handoff script directly (does not `source` it into the parent shell)
-4. Assigns decoded values into `process.env` under your chosen env var names
+1. Resolves the configured secrets backend (NoxKey by default)
+2. Prompts for biometric approval if the backend requires it
+3. Fetches values for your secret paths after you approve
+4. Parses the returned Bash handoff script directly (does not `source` it into the parent shell)
+5. Returns decoded values keyed by your chosen env var names
 
-MCP diagnostic logs are suppressed on success and only printed when a `get` call fails.
+Backend diagnostic logs are suppressed on success and only printed when a fetch fails.
 
 ## API
 
 | Export | Description |
 |--------|-------------|
-| `loadNoxkeyEnv(mapping, options?)` | Fetch secrets and assign to `process.env` |
-| `fetchNoxkeySecrets(mapping, options?)` | Fetch secrets, return a record |
-| `callNoxkeyGetSync(secretPaths, options?)` | Low-level synchronous MCP `get` |
+| `loadSecrets(mapping, options?)` | Fetch secrets, return a record |
 | `parseEnvSecretMapping(entries)` | Parse CLI-style `ENV_NAME=path` strings |
-| `readVarsFromHandoff(path, varNames)` | Parse a handoff script on disk |
-| `connectNoxkeyMcp(options?)` | Async MCP client for interactive tooling |
-| `NoxkeyLoadError` | Error type for loader failures |
+| `parseEnvSecretMappingEntry(entry)` | Parse a single `ENV_NAME=path` string |
+| `validateSecretPath(path)` | Validate a secret path format |
+| `SecretLoadError` | Error type for loader failures |
 
 ### Options
 
 ```typescript
-loadNoxkeyEnv(mapping, { session: '4h' }); // single secret path only; ignored for multiple
+loadSecrets(mapping, { session: '4h' }); // single secret path only; ignored for multiple
 ```
+
+## Backends
+
+### NoxKey (default)
+
+The default backend uses the [NoxKey](https://noxkey.ai/) MCP server over stdio. NoxKey stores secrets in the macOS Keychain and requires Touch ID (or your configured biometric) before releasing them — so fetching a secret is an explicit, user-approved action.
+
+**Requirements:**
+
+- macOS with NoxKey installed and running (menu bar app)
+- Secrets stored at paths like `org/project/SERVICE_ENVIRONMENT_KEY`
+
+The MCP server lives at `/Applications/NoxKey.app/Contents/MacOS/noxkey-mcp`. Override with `NOXKEY_MCP_PATH` if needed.
+
+Each fetch may prompt for Touch ID. With a single-path `session` option (e.g. `{ session: '4h' }`), approved access can be reused for a limited window without re-prompting.
 
 ## Dev tooling
 
-Included scripts for exploring the NoxKey MCP server:
+Included scripts for exploring the NoxKey MCP server (default backend):
 
 ```bash
 pnpm explore   # interactive REPL (tools, call, schema, …)

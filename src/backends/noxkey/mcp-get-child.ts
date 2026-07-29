@@ -3,12 +3,12 @@
  * Invoked synchronously by the parent via execFileSync.
  */
 import { connectNoxkeyMcp } from './connect.js';
-import { mcpTextContent } from './secret-paths.js';
-import type { LoadNoxkeyOptions } from './load-env.js';
+import { mcpTextContent } from '../../secret-paths.js';
+import type { LoadSecretsOptions } from '../../load-secrets.js';
 
 type ChildInput = {
   secret_paths: string[];
-  options?: LoadNoxkeyOptions;
+  options?: LoadSecretsOptions;
 };
 
 async function readStdin(): Promise<string> {

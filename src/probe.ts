@@ -2,7 +2,10 @@
  * Non-interactive probe: connect, print server info + tool schemas, exit.
  * Useful for CI or quick inspection without the REPL.
  */
-import { connectNoxkeyMcp, resolveNoxkeyMcpCommand } from './connect.js';
+import {
+  connectNoxkeyMcp,
+  resolveNoxkeyMcpCommand,
+} from './backends/noxkey/connect.js';
 
 async function main(): Promise<void> {
   const { command, args } = resolveNoxkeyMcpCommand();

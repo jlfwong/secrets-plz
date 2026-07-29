@@ -1,14 +1,14 @@
 import { spawnSync } from 'node:child_process';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { loadNoxkeyEnv } from './load-env.js';
+import { loadSecrets } from './load-secrets.js';
 import { parseEnvSecretMapping } from './secret-paths.js';
 
 const USAGE = `Usage:
   secrets-plz <ENV_NAME=secret_path> [...] -- <command> [args...]
   secrets-plz --help
 
-Each mapping is ENV_NAME=org/project/KEY. NoxKey stores keys as org/project/KEY;
+Each mapping is ENV_NAME=org/project/KEY. Secrets are stored as org/project/KEY;
 ENV_NAME is the variable name exposed to your command (they may differ).
 
 Examples:
@@ -58,12 +58,12 @@ function main(): void {
   }
 
   const { mapping, command } = parseArgs(argv);
-  loadNoxkeyEnv(mapping, { session: '4h' });
+  const secrets = loadSecrets(mapping, { session: '4h' });
 
   const [executable, ...args] = command;
   const result = spawnSync(executable!, args, {
     stdio: 'inherit',
-    env: process.env,
+    env: { ...process.env, ...secrets },
   });
   if (result.error) {
     throw result.error;

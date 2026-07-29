@@ -1,18 +1,18 @@
-/** Validate a NoxKey secret path (org/project/KEY). */
+/** Validate a secret path (org/project/KEY). */
 export function validateSecretPath(secretPath: string): void {
   const trimmed = secretPath.trim();
   if (trimmed.length === 0) {
-    throw new Error('NoxKey secret_path must not be empty');
+    throw new Error('secret_path must not be empty');
   }
   const segments = trimmed.split('/').filter((s) => s.length > 0);
   if (segments.length < 2) {
     throw new Error(
-      `NoxKey secret_path must be org/project/KEY, got: ${secretPath}`,
+      `secret_path must be org/project/KEY, got: ${secretPath}`,
     );
   }
 }
 
-/** Extract the NoxKey key name from a secret path (last path segment). */
+/** Extract the backend key name from a secret path (last path segment). */
 export function envVarNameFromSecretPath(secretPath: string): string {
   validateSecretPath(secretPath);
   const segments = secretPath.trim().split('/').filter((s) => s.length > 0);
@@ -52,20 +52,20 @@ export function parseEnvSecretMapping(
   return mapping;
 }
 
-/** Parse the single-use Bash handoff path from a noxkey `get` text response. */
+/** Parse the single-use Bash handoff path from an MCP `get` text response. */
 export function parseHandoffPath(responseText: string): string {
   const match =
     /source\s+'([^']+\.sh)'/.exec(responseText) ??
     /source\s+"([^"]+\.sh)"/.exec(responseText);
   if (!match?.[1]) {
     throw new Error(
-      'NoxKey get response did not include a source handoff path',
+      'get response did not include a source handoff path',
     );
   }
   return match[1];
 }
 
-/** Parse env var names from "Loads: $FOO, $BAR" lines in a noxkey `get` response. */
+/** Parse env var names from "Loads: $FOO, $BAR" lines in an MCP `get` response. */
 export function parseLoadedVarNames(responseText: string): string[] {
   const names: string[] = [];
   for (const line of responseText.split('\n')) {
