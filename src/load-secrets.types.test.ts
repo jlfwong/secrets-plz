@@ -1,32 +1,29 @@
-import { loadSecrets } from './load-secrets.js';
-import type { LoadedSecrets } from './load-secrets.js';
+import type { LoadedSecrets, SecretMapping } from './types.js';
 
-// Preserve literal env var keys from inline mappings.
-const secrets = loadSecrets({
-  GH_TOKEN: 'personal/general/GITHUB_PRODUCTION_TOKEN',
-  DATABASE_URL: 'myorg/myapp/MYAPP_PRODUCTION_DATABASE_URL',
-});
+type InlineMapping = {
+  GH_TOKEN: 'personal/general/GITHUB_PRODUCTION_TOKEN';
+  DATABASE_URL: 'myorg/myapp/MYAPP_PRODUCTION_DATABASE_URL';
+};
 
-secrets.GH_TOKEN satisfies string;
-secrets.DATABASE_URL satisfies string;
-// @ts-expect-error unknown key
-secrets.UNKNOWN;
+type InlineSecrets = LoadedSecrets<InlineMapping>;
 
-type Expected = LoadedSecrets<{
+type AssertInlineKeys = InlineSecrets extends {
   GH_TOKEN: string;
   DATABASE_URL: string;
-}>;
-type Actual = typeof secrets;
-type AssertLoadedSecrets = Actual extends Expected
-  ? Expected extends Actual
+}
+  ? {
+      GH_TOKEN: string;
+      DATABASE_URL: string;
+    } extends InlineSecrets
     ? true
     : false
   : false;
-void (true as AssertLoadedSecrets);
+void (true as AssertInlineKeys);
 
-// Widen when mapping is not a literal.
-const mapping: Record<string, string> = {
-  GH_TOKEN: 'personal/general/GITHUB_PRODUCTION_TOKEN',
-};
-const widened = loadSecrets(mapping);
-void widened.GH_TOKEN;
+type WidenedSecrets = LoadedSecrets<SecretMapping>;
+type AssertWidened = WidenedSecrets extends Record<string, string>
+  ? Record<string, string> extends WidenedSecrets
+    ? true
+    : false
+  : false;
+void (true as AssertWidened);

@@ -10,10 +10,10 @@
     "secrets-plz": "./src/run.ts"
   },
   "scripts": {
-    "explore": "tsx src/explore.ts",
-    "probe": "tsx src/probe.ts",
+    "explore": "tsx src/backends/noxkey/dev/explore.ts",
+    "probe": "tsx src/backends/noxkey/dev/probe.ts",
     "secrets-plz": "tsx src/run.ts",
-    "test": "tsx --test src/secret-paths.test.ts src/handoff-parse.test.ts src/run.test.ts"
+    "test": "tsx --test src/mapping.test.ts src/backends/noxkey/handoff-parse.test.ts src/backends/noxkey/response.test.ts src/backends/noxkey/paths.test.ts src/run.test.ts"
   },
   "keywords": ["secrets-plz", "secrets", "mcp", "dotenv", "environment"],
   "license": "MIT",

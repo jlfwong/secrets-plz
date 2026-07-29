@@ -5,7 +5,7 @@
 import {
   connectNoxkeyMcp,
   resolveNoxkeyMcpCommand,
-} from './backends/noxkey/connect.js';
+} from '../connect.js';
 
 async function main(): Promise<void> {
   const { command, args } = resolveNoxkeyMcpCommand();

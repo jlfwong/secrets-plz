@@ -2,7 +2,7 @@ import { spawnSync } from 'node:child_process';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { loadSecrets } from './load-secrets.js';
-import { parseEnvSecretMapping } from './secret-paths.js';
+import { parseEnvSecretMapping } from './mapping.js';
 
 const USAGE = `Usage:
   secrets-plz <ENV_NAME=secret_path> [...] -- <command> [args...]

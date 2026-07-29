@@ -1,6 +1,6 @@
 # secrets-plz
 
-A synchronous loader for **dynamic secrets** in local development.
+An approval-based secrets loader for local development.
 
 Use this when you want to run scripts and dev servers with real credentials, but gate every secret fetch behind biometric approval (Touch ID via [NoxKey](https://noxkey.ai/)) instead of storing API keys in `.env` files. Map env var names to secret paths, fetch values at runtime, and pass them to your process — secrets never sit on disk in plaintext.
 

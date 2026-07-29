@@ -1,4 +1,4 @@
-import { connectNoxkeyMcp } from './backends/noxkey/connect.js';
+import { connectNoxkeyMcp } from '../connect.js';
 
 async function main(): Promise<void> {
   const secretPath =

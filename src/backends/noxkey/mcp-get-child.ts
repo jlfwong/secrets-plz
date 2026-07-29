@@ -2,9 +2,9 @@
  * Subprocess entrypoint: read { secret_paths, options } from stdin, write get result JSON to stdout.
  * Invoked synchronously by the parent via execFileSync.
  */
+import type { LoadSecretsOptions } from '../../types.js';
 import { connectNoxkeyMcp } from './connect.js';
-import { mcpTextContent } from '../../secret-paths.js';
-import type { LoadSecretsOptions } from '../../load-secrets.js';
+import { mcpTextContent } from './response.js';
 
 type ChildInput = {
   secret_paths: string[];

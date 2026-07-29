@@ -16,7 +16,7 @@ import { stdin as input, stdout as output } from 'process';
 import {
   connectNoxkeyMcp,
   resolveNoxkeyMcpCommand,
-} from './backends/noxkey/connect.js';
+} from '../connect.js';
 
 function printHelp(): void {
   console.log(`
