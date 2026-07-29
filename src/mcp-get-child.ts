@@ -4,11 +4,11 @@
  */
 import { connectNoxkeyMcp } from './connect.js';
 import { mcpTextContent } from './secret-paths.js';
-import type { LoadNoxkeyEnvOptions } from './load-env.js';
+import type { LoadNoxkeyOptions } from './load-env.js';
 
 type ChildInput = {
   secret_paths: string[];
-  options?: LoadNoxkeyEnvOptions;
+  options?: LoadNoxkeyOptions;
 };
 
 async function readStdin(): Promise<string> {

@@ -1,20 +1,32 @@
 import { spawnSync } from 'node:child_process';
+import { resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { loadNoxkeyEnv } from './load-env.js';
+import { parseEnvSecretMapping } from './secret-paths.js';
 
 const USAGE = `Usage:
-  noxkey-run <secret_path> [...] -- <command> [args...]
-  noxkey-run --help
+  noxkey <ENV_NAME=secret_path> [...] -- <command> [args...]
+  noxkey --help
 
-Each <secret_path> is an org/project/ENV_VAR path. The final segment becomes the
-environment variable name loaded into the child process.
+Each mapping is ENV_NAME=org/project/KEY. NoxKey stores keys as org/project/KEY;
+ENV_NAME is the variable name exposed to your command (they may differ).
 
 Examples:
-  noxkey-run myorg/myapp/DATABASE_URL myorg/myapp/API_KEY -- node server.js
-  noxkey-run myorg/myapp/API_KEY -- node -e "console.log(process.env.API_KEY?.slice(0,4)+'...')"
+  noxkey GH_TOKEN=personal/general/GITHUB_PRODUCTION_TOKEN -- node server.js
+  noxkey DATABASE_URL=myorg/myapp/MYAPP_PRODUCTION_DATABASE_URL API_KEY=myorg/myapp/MYAPP_PRODUCTION_API_KEY -- node server.js
 `;
 
-function parseArgs(argv: string[]): {
-  secretPaths: string[];
+function isHelpRequest(argv: string[]): boolean {
+  if (argv.length === 0) {
+    return true;
+  }
+  const dashDash = argv.indexOf('--');
+  const noxkeyArgs = dashDash === -1 ? argv : argv.slice(0, dashDash);
+  return noxkeyArgs.includes('--help') || noxkeyArgs.includes('-h');
+}
+
+export function parseArgs(argv: string[]): {
+  mapping: Record<string, string>;
   command: string[];
 } {
   let args = argv;
@@ -27,26 +39,26 @@ function parseArgs(argv: string[]): {
     throw new Error('Missing "--" separator before command');
   }
 
-  const secretPathArgs = args.slice(0, dashDash).filter((a) => a.length > 0);
+  const mappingEntries = args.slice(0, dashDash).filter((a) => a.length > 0);
   const command = args.slice(dashDash + 1);
-  if (secretPathArgs.length === 0) {
-    throw new Error('At least one NoxKey secret_path is required');
+  if (mappingEntries.length === 0) {
+    throw new Error('At least one ENV_NAME=secret_path mapping is required');
   }
   if (command.length === 0) {
     throw new Error('Command is required after "--"');
   }
-  return { secretPaths: secretPathArgs, command };
+  return { mapping: parseEnvSecretMapping(mappingEntries), command };
 }
 
 function main(): void {
   const argv = process.argv.slice(2);
-  if (argv.length === 0 || argv.includes('--help') || argv.includes('-h')) {
+  if (isHelpRequest(argv)) {
     console.log(USAGE);
     return;
   }
 
-  const { secretPaths, command } = parseArgs(argv);
-  loadNoxkeyEnv(secretPaths, { session: '4h' });
+  const { mapping, command } = parseArgs(argv);
+  loadNoxkeyEnv(mapping, { session: '4h' });
 
   const [executable, ...args] = command;
   const result = spawnSync(executable!, args, {
@@ -59,9 +71,15 @@ function main(): void {
   process.exit(result.status ?? 1);
 }
 
-try {
-  main();
-} catch (err: unknown) {
-  console.error(err instanceof Error ? err.message : err);
-  process.exit(1);
+const isMain =
+  process.argv[1] !== undefined &&
+  resolve(fileURLToPath(import.meta.url)) === resolve(process.argv[1]);
+
+if (isMain) {
+  try {
+    main();
+  } catch (err: unknown) {
+    console.error(err instanceof Error ? err.message : err);
+    process.exit(1);
+  }
 }

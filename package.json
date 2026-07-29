@@ -1,5 +1,5 @@
 {
-  "name": "noxkey-env",
+  "name": "noxkey",
   "version": "0.0.1",
   "description": "Synchronous dotenv-style loader for NoxKey secrets via MCP",
   "type": "module",
@@ -7,16 +7,16 @@
     ".": "./src/index.ts"
   },
   "bin": {
-    "noxkey-run": "./src/run.ts"
+    "noxkey": "./src/run.ts"
   },
   "scripts": {
     "explore": "tsx src/explore.ts",
     "probe": "tsx src/probe.ts",
-    "noxkey-run": "tsx src/run.ts",
-    "test": "tsx --test src/secret-paths.test.ts src/handoff-parse.test.ts"
+    "noxkey": "tsx src/run.ts",
+    "test": "tsx --test src/secret-paths.test.ts src/handoff-parse.test.ts src/run.test.ts"
   },
   "keywords": ["noxkey", "mcp", "secrets", "dotenv", "environment"],
-  "license": "UNLICENSED",
+  "license": "MIT",
   "dependencies": {
     "@modelcontextprotocol/sdk": "1.29.0"
   },

@@ -12,15 +12,15 @@ import {
   findAssignmentRhs,
 } from './handoff-parse.js';
 
-export class NoxkeyEnvLoadError extends Error {
+export class NoxkeyLoadError extends Error {
   constructor(message: string) {
     super(message);
-    this.name = 'NoxkeyEnvLoadError';
+    this.name = 'NoxkeyLoadError';
   }
 }
 
-export type LoadNoxkeyEnvOptions = {
-  /** Passed to noxkey `get` when fetching a single path. Ignored for arrays. */
+export type LoadNoxkeyOptions = {
+  /** Passed to noxkey `get` when fetching a single path. Ignored for multiple paths. */
   session?: string;
 };
 
@@ -40,7 +40,7 @@ type McpGetChildOutput = {
 /** Call noxkey MCP `get` synchronously (blocks; spawns a short-lived child process). */
 export function callNoxkeyGetSync(
   secretPaths: readonly string[],
-  options: LoadNoxkeyEnvOptions = {},
+  options: LoadNoxkeyOptions = {},
 ): McpGetChildOutput {
   const payload = JSON.stringify({ secret_paths: secretPaths, options });
   try {
@@ -83,7 +83,7 @@ function secretsFromGetText(
   const loaded = readVarsFromHandoff(handoffPath, varNames);
   for (const name of expectedVarNames) {
     if (loaded[name] === undefined || loaded[name].length === 0) {
-      throw new NoxkeyEnvLoadError(
+      throw new NoxkeyLoadError(
         `NoxKey handoff did not load expected env var: ${name}`,
       );
     }
@@ -110,7 +110,7 @@ export function readVarsFromHandoff(
   for (const name of varNames) {
     const rhs = findAssignmentRhs(handoffContents, name);
     if (rhs === undefined) {
-      throw new NoxkeyEnvLoadError(
+      throw new NoxkeyLoadError(
         `NoxKey handoff did not define env var: ${name}`,
       );
     }
@@ -119,7 +119,7 @@ export function readVarsFromHandoff(
     } catch (err: unknown) {
       const message =
         err instanceof Error ? err.message : 'failed to parse handoff assignment';
-      throw new NoxkeyEnvLoadError(message);
+      throw new NoxkeyLoadError(message);
     }
   }
 
@@ -133,29 +133,44 @@ export function readVarsFromHandoff(
   return out;
 }
 
-/** Fetch secrets via noxkey MCP `get` (array form) without mutating process.env. */
+/** Fetch secrets via noxkey MCP `get` without mutating process.env. */
 export function fetchNoxkeySecrets(
-  secretPaths: readonly string[],
-  options: LoadNoxkeyEnvOptions = {},
+  mapping: Record<string, string>,
+  options: LoadNoxkeyOptions = {},
 ): Record<string, string> {
-  if (secretPaths.length === 0) {
+  const entries = Object.entries(mapping);
+  if (entries.length === 0) {
     return {};
   }
 
-  const expectedVarNames = secretPaths.map(envVarNameFromSecretPath);
+  const secretPaths = [...new Set(entries.map(([, path]) => path))];
+  const noxkeyVarNames = secretPaths.map(envVarNameFromSecretPath);
   const { text, isError } = callNoxkeyGetSync(secretPaths, options);
   if (isError) {
-    throw new NoxkeyEnvLoadError(text || 'noxkey get failed');
+    throw new NoxkeyLoadError(text || 'noxkey get failed');
   }
-  return secretsFromGetText(text, expectedVarNames);
+
+  const loadedByNoxkeyVar = secretsFromGetText(text, noxkeyVarNames);
+  const result: Record<string, string> = {};
+  for (const [envName, secretPath] of entries) {
+    const noxkeyVar = envVarNameFromSecretPath(secretPath);
+    const value = loadedByNoxkeyVar[noxkeyVar];
+    if (value === undefined || value.length === 0) {
+      throw new NoxkeyLoadError(
+        `NoxKey handoff did not load secret for ${envName} (${secretPath})`,
+      );
+    }
+    result[envName] = value;
+  }
+  return result;
 }
 
 /** dotenv-style loader: fetch via MCP and assign into process.env. */
 export function loadNoxkeyEnv(
-  secretPaths: readonly string[],
-  options: LoadNoxkeyEnvOptions = {},
+  mapping: Record<string, string>,
+  options: LoadNoxkeyOptions = {},
 ): void {
-  const loaded = fetchNoxkeySecrets(secretPaths, options);
+  const loaded = fetchNoxkeySecrets(mapping, options);
   for (const [key, value] of Object.entries(loaded)) {
     process.env[key] = value;
   }

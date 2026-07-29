@@ -7,17 +7,20 @@ export type {
 export {
   envVarNameFromSecretPath,
   mcpTextContent,
+  parseEnvSecretMapping,
+  parseEnvSecretMappingEntry,
   parseHandoffPath,
   parseLoadedVarNames,
+  validateSecretPath,
 } from './secret-paths.js';
 export {
   callNoxkeyGetSync,
   fetchNoxkeySecrets,
   loadNoxkeyEnv,
   readVarsFromHandoff,
-  NoxkeyEnvLoadError,
+  NoxkeyLoadError,
 } from './load-env.js';
-export type { LoadNoxkeyEnvOptions } from './load-env.js';
+export type { LoadNoxkeyOptions } from './load-env.js';
 export {
   decodeBashAssignmentValue,
   findAssignmentRhs,
