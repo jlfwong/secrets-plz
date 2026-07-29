@@ -22,7 +22,7 @@ pnpm add secrets-plz
 No install required — run the CLI once with [pnpx](https://pnpm.io/cli/dlx):
 
 ```bash
-pnpx secrets-plz GH_TOKEN=personal/general/GITHUB_PRODUCTION_TOKEN -- node server.js
+pnpx secrets-plz GH_TOKEN=personal/general/GITHUB_PRODUCTION_TOKEN -- gh auth status
 ```
 
 ## Quick start
@@ -65,10 +65,10 @@ Run any command with secrets loaded dynamically:
 
 ```bash
 # installed globally or as a project dependency
-secrets-plz GH_TOKEN=personal/general/GITHUB_PRODUCTION_TOKEN -- node server.js
+secrets-plz GH_TOKEN=personal/general/GITHUB_PRODUCTION_TOKEN -- gh auth status
 
 # one-off via pnpx (no install)
-pnpx secrets-plz GH_TOKEN=personal/general/GITHUB_PRODUCTION_TOKEN DATABASE_URL=myorg/myapp/MYAPP_PRODUCTION_DATABASE_URL -- node server.js
+pnpx secrets-plz GH_TOKEN=personal/general/GITHUB_PRODUCTION_TOKEN DATABASE_URL=myorg/myapp/MYAPP_PRODUCTION_DATABASE_URL -- gh auth status
 ```
 
 The CLI merges fetched secrets into the child process environment without mutating the parent shell. Multiple mappings use a single fetch call.
