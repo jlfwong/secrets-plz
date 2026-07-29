@@ -1,5 +1,5 @@
 {
-  "name": "noxkey",
+  "name": "secrets-plz",
   "version": "0.0.1",
   "description": "Synchronous dotenv-style loader for NoxKey secrets via MCP",
   "type": "module",
@@ -7,15 +7,15 @@
     ".": "./src/index.ts"
   },
   "bin": {
-    "noxkey": "./src/run.ts"
+    "secrets-plz": "./src/run.ts"
   },
   "scripts": {
     "explore": "tsx src/explore.ts",
     "probe": "tsx src/probe.ts",
-    "noxkey": "tsx src/run.ts",
+    "secrets-plz": "tsx src/run.ts",
     "test": "tsx --test src/secret-paths.test.ts src/handoff-parse.test.ts src/run.test.ts"
   },
-  "keywords": ["noxkey", "mcp", "secrets", "dotenv", "environment"],
+  "keywords": ["secrets-plz", "noxkey", "mcp", "secrets", "dotenv", "environment"],
   "license": "MIT",
   "dependencies": {
     "@modelcontextprotocol/sdk": "1.29.0"

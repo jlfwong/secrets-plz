@@ -20,7 +20,7 @@ describe('parseArgs', () => {
     );
   });
 
-  it('does not treat -h after -- as a noxkey flag', () => {
+  it('does not treat -h after -- as a secrets-plz flag', () => {
     const { command } = parseArgs([
       'API_KEY=myorg/myapp/MYAPP_PRODUCTION_API_KEY',
       '--',

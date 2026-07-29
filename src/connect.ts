@@ -32,7 +32,7 @@ export async function connectNoxkeyMcp(
 ): Promise<NoxkeyMcpConnection> {
   const { command, args } = resolveNoxkeyMcpCommand();
   const client = new Client({
-    name: 'noxkey',
+    name: 'secrets-plz',
     version: '0.0.1',
   });
   const transport = new StdioClientTransport({

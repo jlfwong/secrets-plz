@@ -5,15 +5,15 @@ import { loadNoxkeyEnv } from './load-env.js';
 import { parseEnvSecretMapping } from './secret-paths.js';
 
 const USAGE = `Usage:
-  noxkey <ENV_NAME=secret_path> [...] -- <command> [args...]
-  noxkey --help
+  secrets-plz <ENV_NAME=secret_path> [...] -- <command> [args...]
+  secrets-plz --help
 
 Each mapping is ENV_NAME=org/project/KEY. NoxKey stores keys as org/project/KEY;
 ENV_NAME is the variable name exposed to your command (they may differ).
 
 Examples:
-  noxkey GH_TOKEN=personal/general/GITHUB_PRODUCTION_TOKEN -- node server.js
-  noxkey DATABASE_URL=myorg/myapp/MYAPP_PRODUCTION_DATABASE_URL API_KEY=myorg/myapp/MYAPP_PRODUCTION_API_KEY -- node server.js
+  secrets-plz GH_TOKEN=personal/general/GITHUB_PRODUCTION_TOKEN -- node server.js
+  secrets-plz DATABASE_URL=myorg/myapp/MYAPP_PRODUCTION_DATABASE_URL API_KEY=myorg/myapp/MYAPP_PRODUCTION_API_KEY -- node server.js
 `;
 
 function isHelpRequest(argv: string[]): boolean {
@@ -21,8 +21,8 @@ function isHelpRequest(argv: string[]): boolean {
     return true;
   }
   const dashDash = argv.indexOf('--');
-  const noxkeyArgs = dashDash === -1 ? argv : argv.slice(0, dashDash);
-  return noxkeyArgs.includes('--help') || noxkeyArgs.includes('-h');
+  const cliArgs = dashDash === -1 ? argv : argv.slice(0, dashDash);
+  return cliArgs.includes('--help') || cliArgs.includes('-h');
 }
 
 export function parseArgs(argv: string[]): {

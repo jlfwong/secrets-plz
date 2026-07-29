@@ -57,7 +57,7 @@ async function main(): Promise<void> {
 
   try {
     while (true) {
-      const line = (await rl.question('noxkey> ')).trim();
+      const line = (await rl.question('secrets-plz> ')).trim();
       if (!line) {
         continue;
       }

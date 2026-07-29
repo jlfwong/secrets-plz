@@ -1,4 +1,4 @@
-# noxkey
+# secrets-plz
 
 A synchronous, [dotenv](https://github.com/motdotla/dotenv)-style loader for [NoxKey](https://noxkey.ai/) secrets over MCP.
 
@@ -15,15 +15,15 @@ The bundled MCP server lives at `/Applications/NoxKey.app/Contents/MacOS/noxkey-
 ## Install
 
 ```bash
-npm install noxkey
+npm install secrets-plz
 # or
-pnpm add noxkey
+pnpm add secrets-plz
 ```
 
 No install required — run the CLI once with [pnpx](https://pnpm.io/cli/dlx):
 
 ```bash
-pnpx noxkey GH_TOKEN=personal/general/GITHUB_PRODUCTION_TOKEN -- node server.js
+pnpx secrets-plz GH_TOKEN=personal/general/GITHUB_PRODUCTION_TOKEN -- node server.js
 ```
 
 ## Quick start
@@ -33,7 +33,7 @@ pnpx noxkey GH_TOKEN=personal/general/GITHUB_PRODUCTION_TOKEN -- node server.js
 Map the env var names your app expects to NoxKey secret paths:
 
 ```typescript
-import { loadNoxkeyEnv } from 'noxkey';
+import { loadNoxkeyEnv } from 'secrets-plz';
 
 loadNoxkeyEnv({
   GH_TOKEN: 'personal/general/GITHUB_PRODUCTION_TOKEN',
@@ -46,7 +46,7 @@ console.log(process.env.GH_TOKEN);
 All functions are **synchronous** — same ergonomics as `dotenv.config()`.
 
 ```typescript
-import { fetchNoxkeySecrets } from 'noxkey';
+import { fetchNoxkeySecrets } from 'secrets-plz';
 
 const secrets = fetchNoxkeySecrets({
   GH_TOKEN: 'personal/general/GITHUB_PRODUCTION_TOKEN',
@@ -62,10 +62,10 @@ Run any command with secrets loaded from NoxKey:
 
 ```bash
 # installed globally or as a project dependency
-noxkey GH_TOKEN=personal/general/GITHUB_PRODUCTION_TOKEN -- node server.js
+secrets-plz GH_TOKEN=personal/general/GITHUB_PRODUCTION_TOKEN -- node server.js
 
 # one-off via pnpx (no install)
-pnpx noxkey GH_TOKEN=personal/general/GITHUB_PRODUCTION_TOKEN DATABASE_URL=myorg/myapp/MYAPP_PRODUCTION_DATABASE_URL -- node server.js
+pnpx secrets-plz GH_TOKEN=personal/general/GITHUB_PRODUCTION_TOKEN DATABASE_URL=myorg/myapp/MYAPP_PRODUCTION_DATABASE_URL -- node server.js
 ```
 
 Touch ID may prompt on first access. Multiple mappings use a single MCP `get` call.
